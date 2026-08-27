@@ -45,12 +45,22 @@ body {
 .search-section select {
   width: 100%;
   padding: 16px;
+  /* leave room for the larger arrow on the right */
+  padding-right: 64px;
   font-size: 18px;
   border: 2px solid #000;
   border-radius: 8px;
   cursor: pointer;
   background-color: white;
   font-weight: 500;
+  /* swap the small native arrow for a bigger custom one */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 18px center;
+  background-size: 30px 30px;
 }
 
 .search-section select:focus {
@@ -151,6 +161,75 @@ body {
 .chat-message.ai {
   color: #333;
   white-space: pre-line;
+}
+
+/* words wrapped in asterisks come through as <strong> */
+.chat-message.ai strong {
+  font-weight: 700;
+}
+
+/* step headings in the generated routine */
+.chat-message.ai .step-title {
+  color: #ff003b;
+  font-weight: 700;
+}
+
+/* three bouncing dots shown while we wait on the AI */
+.chat-message.loading {
+  white-space: normal;
+}
+
+.loading-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 0;
+}
+
+.loading-dots span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ff003b;
+  animation: loading-bounce 1.4s ease-in-out infinite both;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes loading-bounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.35;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-dots span {
+    animation-name: loading-fade;
+  }
+
+  @keyframes loading-fade {
+    0%,
+    80%,
+    100% {
+      opacity: 0.35;
+    }
+    40% {
+      opacity: 1;
+    }
+  }
 }
 
 /* visually hidden */

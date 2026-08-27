@@ -16,13 +16,81 @@ const messages = [
   },
 ];
 
+/* Matches a line that opens a routine step, e.g. "**Step 1: Cleanse**",
+   "### Step 2 - Treat" or "1. Step three" */
+const stepHeadingPattern =
+  /^\s*(?:#{1,6}\s*)?(?:[-*\u2022]\s*)?(?:\d+[.)]\s*)?(?:\*\*\s*)?step\b/i;
+
+/* Escape anything that could be read as HTML, so the AI's reply is only
+   ever rendered with the formatting we add ourselves below */
+function escapeHtml(text) {
+  return text.replace(
+    /[&<>"]/g,
+    (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[char]
+  );
+}
+
+/* Turns *asterisks* into bold text and paints step titles in L'Oreal red */
+function formatMessage(text) {
+  return escapeHtml(text)
+    .split("\n")
+    .map((line) => {
+      const isStepLine = stepHeadingPattern.test(line);
+
+      // Markdown heading hashes add nothing once the line is styled
+      let html = line.replace(/^(\s*)#{1,6}\s*/, "$1");
+
+      // The first bold run on a step line is that step's title
+      let isFirstBold = true;
+      const bold = (match, inner) => {
+        const titleClass = isStepLine && isFirstBold ? ' class="step-title"' : "";
+        isFirstBold = false;
+        return `<strong${titleClass}>${inner}</strong>`;
+      };
+
+      html = html
+        .replace(/\*\*([^*]+)\*\*/g, bold)
+        .replace(/\*([^*\n]+)\*/g, bold);
+
+      // Step titles written without asterisks still get the accent colour
+      if (isStepLine && isFirstBold) {
+        html = `<strong class="step-title">${html}</strong>`;
+      }
+
+      return html;
+    })
+    .join("\n");
+}
+
 /* Adds one message to the chat window, styled by who sent it */
 function addMessage(sender, text) {
   const messageEl = document.createElement("div");
   messageEl.classList.add("chat-message", sender);
-  messageEl.textContent = text;
+
+  if (sender === "ai") {
+    messageEl.innerHTML = formatMessage(text);
+  } else {
+    messageEl.textContent = text;
+  }
+
   chatWindow.appendChild(messageEl);
   chatWindow.scrollTop = chatWindow.scrollHeight;
+  return messageEl;
+}
+
+/* Shows three bouncing dots while we wait on the AI, and hands back the
+   element so the caller can remove it once the reply arrives */
+function showLoadingDots() {
+  const messageEl = document.createElement("div");
+  messageEl.classList.add("chat-message", "ai", "loading");
+  messageEl.setAttribute("role", "status");
+  messageEl.setAttribute("aria-label", "Generating your routine");
+  messageEl.innerHTML =
+    `<span class="loading-dots" aria-hidden="true">` +
+    `<span></span><span></span><span></span></span>`;
+  chatWindow.appendChild(messageEl);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+  return messageEl;
 }
 
 /* Show initial placeholder until user selects a category */
@@ -187,7 +255,7 @@ async function generateRoutine() {
 
   // Disable the button while we wait, so it can't be clicked repeatedly
   generateRoutineBtn.disabled = true;
-  addMessage("ai", "Generating your routine...");
+  const loadingMessage = showLoadingDots();
 
   try {
     const response = await fetch(workerUrl, {
@@ -199,14 +267,14 @@ async function generateRoutine() {
     const data = await response.json();
     const reply = data.choices[0].message.content;
 
-    chatWindow.removeChild(chatWindow.lastChild);
+    loadingMessage.remove();
     addMessage("ai", reply);
 
   // Remember the AI's routine, so it has context if the user asks a follow-up question about it in the chat below
   messages.push({ role: "assistant", content: reply });
   } catch (error) {
     console.error(error);
-    chatWindow.removeChild(chatWindow.lastChild);
+    loadingMessage.remove();
     addMessage("ai", "Sorry, something went wrong generating your routine. Please try again.");
   } finally {
     generateRoutineBtn.disabled = false;

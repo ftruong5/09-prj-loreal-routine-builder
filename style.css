@@ -135,6 +135,24 @@ body {
   outline-offset: 2px;
 }
 
+.chat-message {
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.chat-message:last-child {
+  border-bottom: none;
+}
+
+.chat-message.user {
+  font-weight: 500;
+}
+
+.chat-message.ai {
+  color: #333;
+  white-space: pre-line;
+}
+
 /* visually hidden */
 .visually-hidden {
   position: absolute;

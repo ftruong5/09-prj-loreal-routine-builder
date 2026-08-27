@@ -2,8 +2,28 @@
 const categoryFilter = document.getElementById("categoryFilter");
 const productsContainer = document.getElementById("productsContainer");
 const selectedProductsList = document.getElementById("selectedProductsList");
+const generateRoutineBtn = document.getElementById("generateRoutine");
 const chatForm = document.getElementById("chatForm");
 const chatWindow = document.getElementById("chatWindow");
+
+const workerUrl = "https://loreal-routine.feliciatruong55.workers.dev";
+
+const messages = [
+  {
+    role: "system",
+    content:
+      "You are a L'Oréal skincare and beauty advisor. You'll be given a list of products the user has selected, each with a name, brand, category, and description. Build a clear, step-by-step personalized routine using only those products, explaining the order to use them and why. Keep your answer well-organized and easy to follow.",
+  },
+];
+
+/* Adds one message to the chat window, styled by who sent it */
+function addMessage(sender, text) {
+  const messageEl = document.createElement("div");
+  messageEl.classList.add("chat-message", sender);
+  messageEl.textContent = text;
+  chatWindow.appendChild(messageEl);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+}
 
 /* Show initial placeholder until user selects a category */
 productsContainer.innerHTML = `
@@ -142,6 +162,58 @@ function updateSelectedProductsUI() {
     .map((product) => `<div class="selected-chip">${product.name}</div>`)
     .join("");
 }
+
+async function generateRoutine() {
+  // Don't send an empty request if nothing's been picked yet
+  if (selectedProducts.length === 0) {
+    addMessage("ai", "Please select at least one product first.");
+    return;
+  }
+  const productData = selectedProducts.map((product) => ({
+      name: product.name,
+      brand: product.brand,
+      category: product.category,
+      description: product.description,
+    }));
+
+  // Show a short, readable message in the chat window...
+  addMessage("user", "Generate a routine using my selected products");
+
+  // ...but send the AI the full structured details behind the scenes
+  messages.push({
+    role: "user",
+    content: `Build a personalized routine using these products:\n${JSON.stringify(productData, null, 2)}`,
+  });
+
+  // Disable the button while we wait, so it can't be clicked repeatedly
+  generateRoutineBtn.disabled = true;
+  addMessage("ai", "Generating your routine...");
+
+  try {
+    const response = await fetch(workerUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: messages }),
+    });
+
+    const data = await response.json();
+    const reply = data.choices[0].message.content;
+
+    chatWindow.removeChild(chatWindow.lastChild);
+    addMessage("ai", reply);
+
+  // Remember the AI's routine, so it has context if the user asks a follow-up question about it in the chat below
+  messages.push({ role: "assistant", content: reply });
+  } catch (error) {
+    console.error(error);
+    chatWindow.removeChild(chatWindow.lastChild);
+    addMessage("ai", "Sorry, something went wrong generating your routine. Please try again.");
+  } finally {
+    generateRoutineBtn.disabled = false;
+  }
+}
+
+generateRoutineBtn.addEventListener("click", generateRoutine);
 
 /* Chat form submission handler - placeholder for OpenAI integration */
 chatForm.addEventListener("submit", (e) => {

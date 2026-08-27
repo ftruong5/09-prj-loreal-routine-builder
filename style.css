@@ -113,7 +113,7 @@ body {
 
 .chat-form button {
   font-size: 18px;
-  background: #000;
+  background: #ff003b;
   color: #fff;
   border: none;
   padding: 12px;
@@ -127,11 +127,11 @@ body {
 }
 
 .chat-form button:hover {
-  background: #666666;
+  background: #cc002f;
 }
 
 .chat-form button:focus {
-  outline: 2px solid #000;
+  outline: 2px solid #ff003b;
   outline-offset: 2px;
 }
 
@@ -348,7 +348,7 @@ body {
   font-size: 18px;
   font-weight: 500;
   color: #fff;
-  background: #000;
+  background: #ff003b;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -356,7 +356,12 @@ body {
 }
 
 .generate-btn:hover {
-  background: #666;
+  background: #cc002f;
+}
+
+.generate-btn:focus-visible {
+  outline: 2px solid #ff003b;
+  outline-offset: 2px;
 }
 
 .generate-btn i {

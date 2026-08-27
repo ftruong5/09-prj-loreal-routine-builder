@@ -78,16 +78,18 @@ function addMessage(sender, text) {
   return messageEl;
 }
 
-/* Shows three bouncing dots while we wait on the AI, and hands back the
-   element so the caller can remove it once the reply arrives */
-function showLoadingDots() {
+/* Shows a status line ("Generating your routine" plus three bouncing dots)
+   while we wait on the AI, and hands back the element so the caller can
+   remove it once the reply arrives */
+function showLoadingDots(text = "Generating your routine") {
   const messageEl = document.createElement("div");
   messageEl.classList.add("chat-message", "ai", "loading");
   messageEl.setAttribute("role", "status");
-  messageEl.setAttribute("aria-label", "Generating your routine");
   messageEl.innerHTML =
+    `<span class="loading-text"></span>` +
     `<span class="loading-dots" aria-hidden="true">` +
     `<span></span><span></span><span></span></span>`;
+  messageEl.querySelector(".loading-text").textContent = text;
   chatWindow.appendChild(messageEl);
   chatWindow.scrollTop = chatWindow.scrollHeight;
   return messageEl;
@@ -244,10 +246,9 @@ async function generateRoutine() {
       description: product.description,
     }));
 
-  // Show a short, readable message in the chat window...
-  addMessage("user", "Generate a routine using my selected products");
-
-  // ...but send the AI the full structured details behind the scenes
+  // The animated "Generating your routine" status stands in for the user's
+  // request in the chat window, so we send the AI the full structured
+  // details behind the scenes without echoing anything
   messages.push({
     role: "user",
     content: `Build a personalized routine using these products:\n${JSON.stringify(productData, null, 2)}`,

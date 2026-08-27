@@ -174,9 +174,18 @@ body {
   font-weight: 700;
 }
 
-/* three bouncing dots shown while we wait on the AI */
+/* "Generating your routine" plus three bouncing dots, shown while we wait
+   on the AI */
 .chat-message.loading {
   white-space: normal;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.loading-text {
+  color: #ff003b;
+  font-weight: 700;
 }
 
 .loading-dots {
